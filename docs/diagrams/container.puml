@@ -1,0 +1,21 @@
+@startuml
+title Eureka Music - Container
+actor User
+rectangle "Desktop Client" {
+  component "PySide2 UI" as UI
+  database "SQLite\nlibrary.db" as SQLite
+  folder "Local Tracks" as LocalFiles
+}
+rectangle "Backend" {
+  component "FastAPI" as API
+  database "PostgreSQL" as PG
+  folder "Audio Filesystem" as Audio
+}
+
+User --> UI
+UI --> API : REST
+UI --> SQLite : local metadata/playlists
+UI --> LocalFiles : local playback
+API --> PG : catalog metadata
+API --> Audio : upload/download files
+@enduml

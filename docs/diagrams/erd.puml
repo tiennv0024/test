@@ -1,0 +1,48 @@
+@startuml
+title Eureka Music - ERD
+entity "server.tracks" as tracks {
+  * id : bigint
+  --
+  fma_id : integer
+  title : varchar
+  artist : varchar
+  album : varchar
+  genre : varchar
+  tags : text
+  file_path : text
+  duration_ms : integer
+  file_size : bigint
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "client.local_tracks" as local_tracks {
+  * id : integer
+  --
+  server_track_id : integer
+  title : text
+  artist : text
+  album : text
+  genre : text
+  file_path : text
+  duration_ms : integer
+  downloaded_at : datetime
+}
+
+entity "client.playlists" as playlists {
+  * id : integer
+  --
+  name : text
+  created_at : datetime
+}
+
+entity "client.playlist_tracks" as playlist_tracks {
+  * playlist_id : integer
+  * track_id : integer
+  --
+  position : integer
+}
+
+playlists ||--o{ playlist_tracks
+local_tracks ||--o{ playlist_tracks
+@enduml

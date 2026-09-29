@@ -1,0 +1,16 @@
+@startuml
+title Local Playback
+actor User
+participant UI
+participant PlaybackService
+participant QMediaPlayer
+
+User -> UI : select local track
+UI -> PlaybackService : play_file(path)
+PlaybackService -> QMediaPlayer : setMedia(local file)
+PlaybackService -> QMediaPlayer : play
+QMediaPlayer --> UI : positionChanged/durationChanged
+User -> UI : pause, seek, stop
+UI -> PlaybackService : control command
+PlaybackService -> QMediaPlayer : pause/setPosition/stop
+@enduml

@@ -1,0 +1,15 @@
+@startuml
+title Eureka Music - Server Components
+component "Tracks Router" as Router
+component "TrackService" as Service
+component "TrackRepository" as Repository
+component "SQLAlchemy" as SQLA
+database "PostgreSQL" as PG
+folder "Audio Filesystem" as FS
+
+Router --> Service
+Service --> Repository
+Repository --> SQLA
+SQLA --> PG
+Service --> FS
+@enduml

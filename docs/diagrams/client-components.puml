@@ -1,0 +1,19 @@
+@startuml
+title Eureka Music - Client Components
+component "Views" as Views
+component "Services" as Services
+component "Workers" as Workers
+component "ApiClient" as ApiClient
+component "Repositories" as Repos
+database "SQLite" as SQLite
+component "PlaybackService" as Playback
+component "QMediaPlayer" as Player
+
+Views --> Services
+Views --> Workers
+Workers --> ApiClient
+Services --> Repos
+Repos --> SQLite
+Views --> Playback
+Playback --> Player
+@enduml

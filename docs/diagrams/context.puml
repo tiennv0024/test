@@ -1,0 +1,10 @@
+@startuml
+title Eureka Music - Context
+actor User
+rectangle "PySide2 Desktop Client" as Client
+rectangle "Eureka Music Server" as Server
+
+User --> Client : browse, search, play, upload
+Client --> Server : REST API
+Server --> Client : catalog metadata and audio files
+@enduml

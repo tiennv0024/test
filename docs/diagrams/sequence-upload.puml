@@ -1,0 +1,18 @@
+@startuml
+title Upload Track
+actor User
+participant UI
+participant UploadWorker
+participant FastAPI
+participant Filesystem
+database PostgreSQL
+
+User -> UI : choose file and submit
+UI -> UploadWorker : start in QThread
+UploadWorker -> FastAPI : POST multipart/form-data
+FastAPI -> Filesystem : write .part
+FastAPI -> Filesystem : atomic rename
+FastAPI -> PostgreSQL : insert metadata
+FastAPI --> UploadWorker : created track
+UploadWorker --> UI : success
+@enduml

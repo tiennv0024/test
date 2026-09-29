@@ -1,0 +1,19 @@
+@startuml
+title Download Track
+actor User
+participant UI
+participant DownloadWorker
+participant FastAPI
+participant Filesystem
+database SQLite
+
+User -> UI : click Download
+UI -> DownloadWorker : start in QThread
+DownloadWorker -> FastAPI : GET /tracks/{id}/download
+FastAPI -> Filesystem : stream audio
+Filesystem --> FastAPI : bytes
+FastAPI --> DownloadWorker : response stream
+DownloadWorker -> DownloadWorker : write .part, atomic rename
+DownloadWorker --> UI : success(track, path)
+UI -> SQLite : insert local track
+@enduml
