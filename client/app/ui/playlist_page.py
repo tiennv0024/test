@@ -1,3 +1,4 @@
+from PySide2.QtCore import Signal
 from PySide2.QtWidgets import (
     QComboBox,
     QHBoxLayout,
@@ -13,21 +14,26 @@ from app.services.playlist_service import PlaylistService
 
 
 class PlaylistPage(QWidget):
+    play_requested = Signal(object, int, bool, str)
+
     def __init__(self, playlist_service: PlaylistService, library_repository: LibraryRepository) -> None:
         super().__init__()
         self.playlist_service = playlist_service
         self.library_repository = library_repository
+        self.shuffle_enabled = False
+        self.loop_mode = "OFF"
 
         self.playlists = QComboBox()
         self.tracks = QListWidget()
         self.local_tracks = QComboBox()
         self.create_button = QPushButton("New")
         self.add_button = QPushButton("Add")
+        self.play_button = QPushButton("Play")
         self.remove_button = QPushButton("Remove")
         self.up_button = QPushButton("Up")
         self.down_button = QPushButton("Down")
         self.shuffle_button = QPushButton("Shuffle")
-        self.loop_button = QPushButton("Loop All")
+        self.loop_button = QPushButton("Loop Off")
 
         top = QHBoxLayout()
         top.addWidget(self.playlists, 1)
@@ -38,7 +44,7 @@ class PlaylistPage(QWidget):
         add_row.addWidget(self.add_button)
 
         actions = QHBoxLayout()
-        for button in [self.remove_button, self.up_button, self.down_button, self.shuffle_button, self.loop_button]:
+        for button in [self.play_button, self.remove_button, self.up_button, self.down_button, self.shuffle_button, self.loop_button]:
             actions.addWidget(button)
 
         layout = QVBoxLayout(self)
@@ -49,9 +55,12 @@ class PlaylistPage(QWidget):
 
         self.create_button.clicked.connect(self.create_playlist)
         self.add_button.clicked.connect(self.add_track)
+        self.play_button.clicked.connect(self.play_playlist)
         self.remove_button.clicked.connect(self.remove_track)
         self.up_button.clicked.connect(lambda: self.move_selected(-1))
         self.down_button.clicked.connect(lambda: self.move_selected(1))
+        self.shuffle_button.clicked.connect(self.toggle_shuffle)
+        self.loop_button.clicked.connect(self.toggle_loop)
         self.playlists.currentIndexChanged.connect(self.refresh_tracks)
         self.refresh()
 
@@ -121,3 +130,21 @@ class PlaylistPage(QWidget):
         self.playlist_service.reorder(playlist_id, [int(track_id) for track_id in track_ids if track_id is not None])
         self.refresh_tracks()
         self.tracks.setCurrentRow(new_row)
+
+    def toggle_shuffle(self) -> None:
+        self.shuffle_enabled = not self.shuffle_enabled
+        self.shuffle_button.setText("Shuffle On" if self.shuffle_enabled else "Shuffle")
+
+    def toggle_loop(self) -> None:
+        self.loop_mode = "ALL" if self.loop_mode == "OFF" else "OFF"
+        self.loop_button.setText("Loop All" if self.loop_mode == "ALL" else "Loop Off")
+
+    def play_playlist(self) -> None:
+        playlist_id = self.current_playlist_id()
+        if not playlist_id:
+            return
+        tracks = self.playlist_service.tracks(playlist_id)
+        if not tracks:
+            return
+        start_index = max(self.tracks.currentRow(), 0)
+        self.play_requested.emit(tracks, start_index, self.shuffle_enabled, self.loop_mode)
