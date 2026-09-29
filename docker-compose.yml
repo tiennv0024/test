@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: eureka_music
+      POSTGRES_USER: eureka
+      POSTGRES_PASSWORD: eureka
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eureka -d eureka_music"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: ./server
+    environment:
+      DATABASE_URL: postgresql://eureka:eureka@postgres:5432/eureka_music
+      AUDIO_STORAGE_PATH: /app/storage/tracks
+    volumes:
+      - ./server/storage:/app/storage
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
