@@ -1,0 +1,29 @@
+.venv/
+.venv*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+.env
+*.log
+
+# Local runtime data
+server/storage/tracks/*
+!server/storage/tracks/.gitkeep
+client/storage/tracks/*
+!client/storage/tracks/.gitkeep
+
+# FMA dataset must never be committed
+fma_small/
+fma_metadata/
+fma/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
