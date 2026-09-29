@@ -3,8 +3,10 @@ from PySide2.QtWidgets import (
     QComboBox,
     QHBoxLayout,
     QInputDialog,
+    QLabel,
     QListWidget,
     QPushButton,
+    QStyle,
     QVBoxLayout,
     QWidget,
 )
@@ -23,6 +25,10 @@ class PlaylistPage(QWidget):
         self.shuffle_enabled = False
         self.loop_mode = "OFF"
 
+        self.title = QLabel("Playlists")
+        self.title.setObjectName("PageTitle")
+        self.status = QLabel("")
+        self.status.setObjectName("MutedLabel")
         self.playlists = QComboBox()
         self.tracks = QListWidget()
         self.local_tracks = QComboBox()
@@ -34,6 +40,21 @@ class PlaylistPage(QWidget):
         self.down_button = QPushButton("Down")
         self.shuffle_button = QPushButton("Shuffle")
         self.loop_button = QPushButton("Loop Off")
+        self.play_button.setObjectName("PrimaryButton")
+        self.remove_button.setObjectName("DangerButton")
+        self.create_button.setIcon(self.style().standardIcon(QStyle.SP_FileDialogNewFolder))
+        self.add_button.setIcon(self.style().standardIcon(QStyle.SP_FileDialogToParent))
+        self.play_button.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        self.remove_button.setIcon(self.style().standardIcon(QStyle.SP_TrashIcon))
+        self.up_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowUp))
+        self.down_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowDown))
+        self.shuffle_button.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        self.loop_button.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+
+        header = QHBoxLayout()
+        header.addWidget(self.title)
+        header.addStretch(1)
+        header.addWidget(self.status)
 
         top = QHBoxLayout()
         top.addWidget(self.playlists, 1)
@@ -48,6 +69,9 @@ class PlaylistPage(QWidget):
             actions.addWidget(button)
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(14, 14, 14, 14)
+        layout.setSpacing(10)
+        layout.addLayout(header)
         layout.addLayout(top)
         layout.addLayout(add_row)
         layout.addWidget(self.tracks, 1)
@@ -88,6 +112,7 @@ class PlaylistPage(QWidget):
             return
         for track in self.playlist_service.tracks(playlist_id):
             self.tracks.addItem(f"{track.title} - {track.artist or 'Unknown artist'}")
+        self.status.setText(f"{self.tracks.count()} tracks")
 
     def current_playlist_id(self) -> int | None:
         value = self.playlists.currentData()
@@ -134,10 +159,12 @@ class PlaylistPage(QWidget):
     def toggle_shuffle(self) -> None:
         self.shuffle_enabled = not self.shuffle_enabled
         self.shuffle_button.setText("Shuffle On" if self.shuffle_enabled else "Shuffle")
+        self.status.setText("Shuffle on" if self.shuffle_enabled else "Shuffle off")
 
     def toggle_loop(self) -> None:
         self.loop_mode = "ALL" if self.loop_mode == "OFF" else "OFF"
         self.loop_button.setText("Loop All" if self.loop_mode == "ALL" else "Loop Off")
+        self.status.setText("Loop all" if self.loop_mode == "ALL" else "Loop off")
 
     def play_playlist(self) -> None:
         playlist_id = self.current_playlist_id()

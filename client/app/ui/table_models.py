@@ -2,7 +2,7 @@ from PySide2.QtCore import QAbstractTableModel, QModelIndex, Qt
 
 
 class TrackTableModel(QAbstractTableModel):
-    headers = ["Title", "Artist", "Album", "Genre"]
+    headers = ["Title", "Artist", "Album", "Genre", "Time"]
 
     def __init__(self, tracks: list[dict] | None = None) -> None:
         super().__init__()
@@ -18,6 +18,8 @@ class TrackTableModel(QAbstractTableModel):
         if not index.isValid() or role != Qt.DisplayRole:
             return None
         track = self.tracks[index.row()]
+        if index.column() == 4:
+            return self._duration(track.get("duration_ms"))
         key = ["title", "artist", "album", "genre"][index.column()]
         return track.get(key) or ""
 
@@ -35,3 +37,10 @@ class TrackTableModel(QAbstractTableModel):
         if 0 <= row < len(self.tracks):
             return self.tracks[row]
         return None
+
+    @staticmethod
+    def _duration(duration_ms) -> str:
+        if duration_ms is None:
+            return ""
+        seconds = int(duration_ms) // 1000
+        return f"{seconds // 60}:{seconds % 60:02d}"

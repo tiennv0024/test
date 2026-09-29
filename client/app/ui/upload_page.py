@@ -1,7 +1,19 @@
 from pathlib import Path
 
 from PySide2.QtCore import QThread, Signal
-from PySide2.QtWidgets import QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget
+from PySide2.QtWidgets import (
+    QFileDialog,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QStyle,
+    QVBoxLayout,
+    QWidget,
+)
 
 from app.api.api_client import ApiClient
 from app.workers.upload_worker import UploadWorker
@@ -16,7 +28,10 @@ class UploadPage(QWidget):
         self.file_path: Path | None = None
         self.threads: list[QThread] = []
 
+        self.page_title = QLabel("Upload Track")
+        self.page_title.setObjectName("PageTitle")
         self.file_label = QLabel("No file selected")
+        self.file_label.setObjectName("MutedLabel")
         self.choose_button = QPushButton("Choose")
         self.title = QLineEdit()
         self.artist = QLineEdit()
@@ -24,6 +39,14 @@ class UploadPage(QWidget):
         self.genre = QLineEdit()
         self.upload_button = QPushButton("Upload")
         self.status = QLabel("")
+        self.status.setObjectName("MutedLabel")
+        self.progress = QProgressBar()
+        self.progress.setRange(0, 1)
+        self.progress.setValue(0)
+        self.progress.hide()
+        self.choose_button.setIcon(self.style().standardIcon(QStyle.SP_DialogOpenButton))
+        self.upload_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowUp))
+        self.upload_button.setObjectName("PrimaryButton")
 
         file_row = QHBoxLayout()
         file_row.addWidget(self.file_label, 1)
@@ -37,8 +60,12 @@ class UploadPage(QWidget):
         form.addRow("Genre", self.genre)
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(14, 14, 14, 14)
+        layout.setSpacing(10)
+        layout.addWidget(self.page_title)
         layout.addLayout(form)
         layout.addWidget(self.upload_button)
+        layout.addWidget(self.progress)
         layout.addWidget(self.status)
         layout.addStretch(1)
 
@@ -75,15 +102,22 @@ class UploadPage(QWidget):
         thread.finished.connect(thread.deleteLater)
         thread.finished.connect(lambda: self._forget_thread(thread))
         self.threads.append(thread)
+        self.upload_button.setEnabled(False)
+        self.progress.setRange(0, 0)
+        self.progress.show()
         self.status.setText("Uploading...")
         thread.start()
 
     def upload_success(self, payload: dict) -> None:
         self.status.setText(f"Uploaded {payload.get('title', 'track')}")
+        self.progress.hide()
+        self.upload_button.setEnabled(True)
         self.uploaded.emit()
 
     def upload_failed(self, message: str) -> None:
         self.status.setText("Upload failed")
+        self.progress.hide()
+        self.upload_button.setEnabled(True)
         QMessageBox.warning(self, "Eureka Music", message)
 
     def _forget_thread(self, thread: QThread) -> None:

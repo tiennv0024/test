@@ -1,4 +1,17 @@
-from PySide2.QtWidgets import QListWidget, QMainWindow, QMessageBox, QSplitter, QStackedWidget, QVBoxLayout, QWidget
+from PySide2.QtCore import Qt
+from PySide2.QtWidgets import (
+    QFrame,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QMainWindow,
+    QMessageBox,
+    QSplitter,
+    QStackedWidget,
+    QStyle,
+    QVBoxLayout,
+    QWidget,
+)
 
 from app.api.api_client import ApiClient
 from app.db.database import get_connection, init_db
@@ -17,7 +30,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Eureka Music")
-        self.resize(1100, 720)
+        self.resize(1180, 760)
 
         self.conn = get_connection()
         init_db(self.conn)
@@ -31,8 +44,13 @@ class MainWindow(QMainWindow):
         self.queue_tracks = {}
 
         self.navigation = QListWidget()
-        self.navigation.addItems(["Catalog", "Library", "Playlists", "Upload"])
-        self.navigation.setFixedWidth(150)
+        self.navigation.setFrameShape(QFrame.NoFrame)
+        self.navigation.setSpacing(2)
+        self.navigation.setFixedWidth(180)
+        self._add_nav_item("Catalog", QStyle.SP_FileDialogDetailedView)
+        self._add_nav_item("Library", QStyle.SP_DirHomeIcon)
+        self._add_nav_item("Playlists", QStyle.SP_MediaPlay)
+        self._add_nav_item("Upload", QStyle.SP_ArrowUp)
 
         self.stack = QStackedWidget()
         self.catalog_page = CatalogPage(self.api_client, self.library_service)
@@ -43,18 +61,36 @@ class MainWindow(QMainWindow):
         for page in [self.catalog_page, self.library_page, self.playlist_page, self.upload_page]:
             self.stack.addWidget(page)
 
+        sidebar = QFrame()
+        sidebar.setObjectName("Sidebar")
+        sidebar_layout = QVBoxLayout(sidebar)
+        sidebar_layout.setContentsMargins(12, 14, 12, 12)
+        title = QLabel("Eureka Music")
+        title.setObjectName("AppTitle")
+        subtitle = QLabel("FMA Small player")
+        subtitle.setObjectName("MutedLabel")
+        sidebar_layout.addWidget(title)
+        sidebar_layout.addWidget(subtitle)
+        sidebar_layout.addSpacing(14)
+        sidebar_layout.addWidget(self.navigation, 1)
+
         splitter = QSplitter()
-        splitter.addWidget(self.navigation)
+        splitter.setChildrenCollapsible(False)
+        splitter.addWidget(sidebar)
         splitter.addWidget(self.stack)
         splitter.setStretchFactor(1, 1)
 
         self.player = PlayerWidget(self.playback_service)
 
         root = QWidget()
+        root.setObjectName("RootPanel")
         layout = QVBoxLayout(root)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
         layout.addWidget(splitter, 1)
         layout.addWidget(self.player)
         self.setCentralWidget(root)
+        self.statusBar().showMessage("Ready")
 
         self.navigation.currentRowChanged.connect(self.stack.setCurrentIndex)
         self.navigation.setCurrentRow(0)
@@ -65,9 +101,15 @@ class MainWindow(QMainWindow):
         if self.playback_service.player is not None:
             self.playback_service.player.mediaStatusChanged.connect(self.on_media_status_changed)
 
+    def _add_nav_item(self, label: str, icon: QStyle.StandardPixmap) -> None:
+        item = QListWidgetItem(self.style().standardIcon(icon), label)
+        item.setTextAlignment(Qt.AlignVCenter)
+        self.navigation.addItem(item)
+
     def refresh_local_views(self) -> None:
         self.library_page.refresh()
         self.playlist_page.refresh()
+        self.statusBar().showMessage("Local library refreshed", 2500)
 
     def play_track(self, track) -> None:
         self._play_track(track, reset_queue=True)
@@ -90,6 +132,7 @@ class MainWindow(QMainWindow):
         current_id = self.playback_queue.current()
         if current_id is not None:
             self._play_track(self.queue_tracks[current_id], reset_queue=False)
+            self.statusBar().showMessage("Playing playlist", 2500)
 
     def on_media_status_changed(self, status) -> None:
         player = self.playback_service.player

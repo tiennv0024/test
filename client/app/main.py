@@ -4,6 +4,7 @@ import time
 
 from PySide2.QtWidgets import QApplication
 
+from app.ui.theme import apply_app_theme
 from app.ui.main_window import MainWindow
 
 
@@ -14,6 +15,7 @@ def main() -> int:
     )
     started = time.perf_counter()
     app = QApplication(sys.argv)
+    apply_app_theme(app)
     window = MainWindow()
     window.show()
     logging.info("Startup completed in %.3f seconds", time.perf_counter() - started)
